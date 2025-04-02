@@ -1,29 +1,47 @@
 
 import React, { useEffect, useState } from 'react';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ArrowRight, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { BookOpen, ArrowRight, Loader2, Plus, Edit, FileEdit, Eye, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Articles = () => {
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const articlesPerPage = 6;
 
-  const { data: articlesData, isLoading, error } = useQuery({
-    queryKey: ['articles', currentPage],
+  const canManageArticles = isAuthenticated && (user?.role === 'admin' || user?.role === 'volunteer');
+
+  const { data: articlesData, isLoading, error, refetch } = useQuery({
+    queryKey: ['articles', currentPage, user?.role],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('articles')
         .select('*')
-        .range((currentPage - 1) * articlesPerPage, currentPage * articlesPerPage - 1)
-        .order('published_at', { ascending: false });
+        .order('published_at', { ascending: false })
+        .range((currentPage - 1) * articlesPerPage, currentPage * articlesPerPage - 1);
+      
+      // If user is not admin or volunteer, only show published articles
+      if (!canManageArticles) {
+        query = query.eq('status', 'published');
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
@@ -32,16 +50,48 @@ const Articles = () => {
 
   // Get total count for pagination
   const { data: countData } = useQuery({
-    queryKey: ['articlesCount'],
+    queryKey: ['articlesCount', user?.role],
     queryFn: async () => {
-      const { count, error } = await supabase
+      let query = supabase
         .from('articles')
         .select('*', { count: 'exact', head: true });
+      
+      // If user is not admin or volunteer, only count published articles
+      if (!canManageArticles) {
+        query = query.eq('status', 'published');
+      }
+      
+      const { count, error } = await query;
       
       if (error) throw error;
       return count || 0;
     }
   });
+
+  const handleDeleteArticle = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('articles')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Article deleted",
+        description: "The article has been successfully deleted.",
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error("Error deleting article:", error);
+      toast({
+        title: "Error deleting article",
+        description: "There was a problem deleting the article. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     if (error) {
@@ -64,7 +114,8 @@ const Articles = () => {
       content: "Learn about innovative farming techniques that allow for agricultural production while preserving forest integrity.",
       tags: ["Agriculture", "Sustainability"],
       published_at: new Date().toISOString(),
-      readTime: 7
+      read_time: 7,
+      status: 'published'
     },
     {
       id: '2',
@@ -72,7 +123,8 @@ const Articles = () => {
       content: "How traditional ecological knowledge from indigenous communities contributes to conservation efforts.",
       tags: ["Indigenous", "Conservation"],
       published_at: new Date().toISOString(),
-      readTime: 9
+      read_time: 9,
+      status: 'published'
     },
     {
       id: '3',
@@ -80,7 +132,8 @@ const Articles = () => {
       content: "Research findings on how climate change is affecting the Amazon rainforest and its unique biodiversity.",
       tags: ["Climate", "Research"],
       published_at: new Date().toISOString(),
-      readTime: 12
+      read_time: 12,
+      status: 'published'
     }
   ];
 
@@ -93,9 +146,19 @@ const Articles = () => {
         <main className="flex-grow pt-16">
           <section className="py-16 lg:py-24 bg-forest-50">
             <div className="container">
-              <h1 className="text-3xl lg:text-4xl font-bold text-forest-800 mb-6 text-center title-accent mx-auto w-fit">
-                Knowledge Hub
-              </h1>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl lg:text-4xl font-bold text-forest-800 title-accent mx-auto w-fit">
+                  Knowledge Hub
+                </h1>
+                {canManageArticles && (
+                  <Button 
+                    onClick={() => navigate('/articles/new')} 
+                    className="bg-forest-600 hover:bg-forest-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> New Article
+                  </Button>
+                )}
+              </div>
               <p className="text-center text-forest-600 max-w-2xl mx-auto mb-12">
                 Discover our latest articles and research on sustainable development, conservation, and the Amazon rainforest ecosystem.
               </p>
@@ -107,7 +170,7 @@ const Articles = () => {
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {displayedArticles.map((article) => (
-                    <Card key={article.id} className="eco-card overflow-hidden">
+                    <Card key={article.id} className={`eco-card overflow-hidden ${article.status === 'draft' ? 'border-dashed border-2 border-amber-400' : ''}`}>
                       <div className="h-40 overflow-hidden">
                         <img 
                           src={`https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000)}?auto=format&fit=crop&w=800&q=80`} 
@@ -116,21 +179,17 @@ const Articles = () => {
                         />
                       </div>
                       <CardHeader className="p-4 pb-2">
-                        <div className="flex gap-2 mb-2 flex-wrap">
-                          {article.tags ? article.tags.map((tag: string) => (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {article.status === 'draft' && (
+                            <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                              Draft
+                            </Badge>
+                          )}
+                          {article.tags && article.tags.map((tag: string) => (
                             <Badge key={tag} variant="secondary" className="bg-forest-100 text-forest-700 hover:bg-forest-200">
                               {tag}
                             </Badge>
-                          )) : (
-                            <>
-                              <Badge variant="secondary" className="bg-forest-100 text-forest-700 hover:bg-forest-200">
-                                Conservation
-                              </Badge>
-                              <Badge variant="secondary" className="bg-forest-100 text-forest-700 hover:bg-forest-200">
-                                Research
-                              </Badge>
-                            </>
-                          )}
+                          ))}
                         </div>
                         <CardTitle className="text-lg line-clamp-2">{article.title}</CardTitle>
                       </CardHeader>
@@ -142,12 +201,41 @@ const Articles = () => {
                       <CardFooter className="p-4 pt-0 flex items-center justify-between">
                         <div className="flex items-center gap-1 text-sm text-forest-600">
                           <BookOpen className="h-4 w-4" />
-                          <span>{article.readTime || Math.floor(Math.random() * 10) + 5} min read</span>
+                          <span>{article.read_time || Math.floor(Math.random() * 10) + 5} min read</span>
                         </div>
-                        <Link to={`/articles/${article.id}`} className="text-forest-600 hover:text-forest-800 text-sm font-medium flex items-center gap-1">
-                          Read more
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        
+                        {canManageArticles ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <FileEdit className="h-4 w-4 mr-1" /> Actions
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link to={`/articles/${article.id}`}>
+                                  <Eye className="h-4 w-4 mr-2" /> View
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link to={`/articles/edit/${article.id}`}>
+                                  <Edit className="h-4 w-4 mr-2" /> Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteArticle(article.id)}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <Link to={`/articles/${article.id}`} className="text-forest-600 hover:text-forest-800 text-sm font-medium flex items-center gap-1">
+                            Read more
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        )}
                       </CardFooter>
                     </Card>
                   ))}

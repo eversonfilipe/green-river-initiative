@@ -50,6 +50,9 @@ export type Database = {
           content: string
           id: string
           published_at: string | null
+          read_time: number | null
+          status: string | null
+          tags: string[] | null
           title: string
           updated_at: string | null
         }
@@ -58,6 +61,9 @@ export type Database = {
           content: string
           id?: string
           published_at?: string | null
+          read_time?: number | null
+          status?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
         }
@@ -66,6 +72,9 @@ export type Database = {
           content?: string
           id?: string
           published_at?: string | null
+          read_time?: number | null
+          status?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
         }
@@ -156,6 +165,39 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_background: string | null
+          avatar_clothing: string | null
+          avatar_gender: string | null
+          avatar_skin: string | null
+          biography: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_background?: string | null
+          avatar_clothing?: string | null
+          avatar_gender?: string | null
+          avatar_skin?: string | null
+          biography?: string | null
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_background?: string | null
+          avatar_clothing?: string | null
+          avatar_gender?: string | null
+          avatar_skin?: string | null
+          biography?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -188,7 +230,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "user" | "admin" | "volunteer"
