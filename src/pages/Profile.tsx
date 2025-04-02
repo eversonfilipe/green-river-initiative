@@ -23,14 +23,8 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Save, User } from 'lucide-react';
+import { AvatarEditor } from '@/components/AvatarEditor';
 
 // Define the profile interface
 interface ProfileData {
@@ -40,34 +34,13 @@ interface ProfileData {
   avatar_clothing?: string | null;
   avatar_background?: string | null;
   avatar_gender?: string | null;
+  avatar_hair?: string | null;
+  avatar_accessories?: string | null;
+  avatar_facial_hair?: string | null;
+  avatar_eyebrows?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
-
-const avatarOptions = {
-  skin: [
-    { value: 'light', label: 'Light' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'dark', label: 'Dark' },
-  ],
-  clothing: [
-    { value: 'casual', label: 'Casual' },
-    { value: 'formal', label: 'Formal' },
-    { value: 'sporty', label: 'Sporty' },
-  ],
-  background: [
-    { value: 'blue', label: 'Blue' },
-    { value: 'green', label: 'Green' },
-    { value: 'purple', label: 'Purple' },
-    { value: 'orange', label: 'Orange' },
-    { value: 'pink', label: 'Pink' },
-  ],
-  gender: [
-    { value: 'neutral', label: 'Neutral' },
-    { value: 'male', label: 'Male' },
-    { value: 'female', label: 'Female' },
-  ],
-};
 
 const Profile = () => {
   const { user, isAuthenticated } = useAuth();
@@ -78,8 +51,13 @@ const Profile = () => {
     clothing: 'casual',
     background: 'blue', 
     gender: 'neutral',
+    hair: 'short',
+    accessories: 'none',
+    facialHair: 'none',
+    eyebrows: 'default'
   });
   const [saveButtonDisabled, setSaveButtonDisabled] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch profile data
   const { data: profileData, isLoading, error, refetch } = useQuery({
@@ -113,7 +91,11 @@ const Profile = () => {
           avatar_skin: 'medium',
           avatar_clothing: 'casual',
           avatar_background: 'blue',
-          avatar_gender: 'neutral'
+          avatar_gender: 'neutral',
+          avatar_hair: 'short',
+          avatar_accessories: 'none',
+          avatar_facial_hair: 'none',
+          avatar_eyebrows: 'default'
         }
       };
     },
@@ -123,14 +105,20 @@ const Profile = () => {
   // Update form values when profile data is loaded
   useEffect(() => {
     if (profileData) {
-      setBiography(profileData.profile.biography || '');
-      setDisplayName(profileData.user.full_name || '');
+      setBiography(profileData.profile?.biography || '');
+      setDisplayName(profileData.user?.full_name || '');
+      
       setAvatarSettings({
-        skin: profileData.profile.avatar_skin || 'medium',
-        clothing: profileData.profile.avatar_clothing || 'casual',
-        background: profileData.profile.avatar_background || 'blue',
-        gender: profileData.profile.avatar_gender || 'neutral',
+        skin: profileData.profile?.avatar_skin || 'medium',
+        clothing: profileData.profile?.avatar_clothing || 'casual',
+        background: profileData.profile?.avatar_background || 'blue',
+        gender: profileData.profile?.avatar_gender || 'neutral',
+        hair: profileData.profile?.avatar_hair || 'short',
+        accessories: profileData.profile?.avatar_accessories || 'none',
+        facialHair: profileData.profile?.avatar_facial_hair || 'none',
+        eyebrows: profileData.profile?.avatar_eyebrows || 'default'
       });
+      
       setSaveButtonDisabled(true);
     }
   }, [profileData]);
@@ -139,13 +127,17 @@ const Profile = () => {
   useEffect(() => {
     if (profileData) {
       const hasProfileChanges = 
-        biography !== (profileData.profile.biography || '') ||
-        avatarSettings.skin !== (profileData.profile.avatar_skin || 'medium') ||
-        avatarSettings.clothing !== (profileData.profile.avatar_clothing || 'casual') ||
-        avatarSettings.background !== (profileData.profile.avatar_background || 'blue') ||
-        avatarSettings.gender !== (profileData.profile.avatar_gender || 'neutral');
+        biography !== (profileData.profile?.biography || '') ||
+        avatarSettings.skin !== (profileData.profile?.avatar_skin || 'medium') ||
+        avatarSettings.clothing !== (profileData.profile?.avatar_clothing || 'casual') ||
+        avatarSettings.background !== (profileData.profile?.avatar_background || 'blue') ||
+        avatarSettings.gender !== (profileData.profile?.avatar_gender || 'neutral') ||
+        avatarSettings.hair !== (profileData.profile?.avatar_hair || 'short') ||
+        avatarSettings.accessories !== (profileData.profile?.avatar_accessories || 'none') ||
+        avatarSettings.facialHair !== (profileData.profile?.avatar_facial_hair || 'none') ||
+        avatarSettings.eyebrows !== (profileData.profile?.avatar_eyebrows || 'default');
       
-      const hasUserChanges = displayName !== (profileData.user.full_name || '');
+      const hasUserChanges = displayName !== (profileData.user?.full_name || '');
       
       setSaveButtonDisabled(!(hasProfileChanges || hasUserChanges));
     }
@@ -158,6 +150,8 @@ const Profile = () => {
     if (!user?.id) return;
     
     try {
+      setIsSaving(true);
+      
       // Update user data
       const { error: userError } = await supabase
         .from('users')
@@ -179,6 +173,10 @@ const Profile = () => {
           avatar_clothing: avatarSettings.clothing,
           avatar_background: avatarSettings.background,
           avatar_gender: avatarSettings.gender,
+          avatar_hair: avatarSettings.hair,
+          avatar_accessories: avatarSettings.accessories,
+          avatar_facial_hair: avatarSettings.facialHair,
+          avatar_eyebrows: avatarSettings.eyebrows,
           updated_at: new Date().toISOString()
         });
       
@@ -190,6 +188,7 @@ const Profile = () => {
       });
       
       refetch();
+      setSaveButtonDisabled(true);
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -197,22 +196,9 @@ const Profile = () => {
         description: "There was a problem updating your profile. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
-  };
-  
-  // Generate avatar URL based on settings
-  const getAvatarUrl = () => {
-    const baseUrl = `https://api.dicebear.com/7.x/personas/svg`;
-    const seed = user?.id || 'default';
-    const params = new URLSearchParams({
-      seed,
-      backgroundColor: avatarSettings.background,
-      skinTone: avatarSettings.skin,
-      clothing: avatarSettings.clothing,
-      gender: avatarSettings.gender,
-    });
-    
-    return `${baseUrl}?${params.toString()}`;
   };
 
   return (
@@ -249,7 +235,7 @@ const Profile = () => {
               </TabsList>
               
               <form onSubmit={handleSubmit}>
-                <TabsContent value="profile" className="space-y-8">
+                <TabsContent value="profile">
                   <Card>
                     <CardHeader>
                       <CardTitle>Personal Information</CardTitle>
@@ -302,121 +288,27 @@ const Profile = () => {
                   </Card>
                 </TabsContent>
                 
-                <TabsContent value="avatar" className="space-y-8">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Avatar Customization</CardTitle>
-                      <CardDescription>
-                        Customize your avatar appearance by selecting different features.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex flex-col space-y-6">
-                          <div>
-                            <label htmlFor="avatarSkin" className="block text-sm font-medium text-forest-700 mb-1">
-                              Skin Tone
-                            </label>
-                            <Select
-                              value={avatarSettings.skin}
-                              onValueChange={(value) => setAvatarSettings({...avatarSettings, skin: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select skin tone" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {avatarOptions.skin.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <label htmlFor="avatarClothing" className="block text-sm font-medium text-forest-700 mb-1">
-                              Clothing Style
-                            </label>
-                            <Select
-                              value={avatarSettings.clothing}
-                              onValueChange={(value) => setAvatarSettings({...avatarSettings, clothing: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select clothing style" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {avatarOptions.clothing.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <label htmlFor="avatarBackground" className="block text-sm font-medium text-forest-700 mb-1">
-                              Background Color
-                            </label>
-                            <Select
-                              value={avatarSettings.background}
-                              onValueChange={(value) => setAvatarSettings({...avatarSettings, background: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select background color" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {avatarOptions.background.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <label htmlFor="avatarGender" className="block text-sm font-medium text-forest-700 mb-1">
-                              Gender Appearance
-                            </label>
-                            <Select
-                              value={avatarSettings.gender}
-                              onValueChange={(value) => setAvatarSettings({...avatarSettings, gender: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select gender appearance" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {avatarOptions.gender.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-forest-200 mb-4">
-                            <img 
-                              src={getAvatarUrl()} 
-                              alt="Avatar Preview" 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <p className="text-sm text-forest-600">Avatar Preview</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <TabsContent value="avatar">
+                  <AvatarEditor 
+                    userId={user?.id || ''}
+                    initialSettings={avatarSettings}
+                    onChange={setAvatarSettings}
+                  />
                 </TabsContent>
                 
                 <div className="mt-8 flex justify-end">
-                  <Button type="submit" disabled={saveButtonDisabled}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
+                  <Button type="submit" disabled={saveButtonDisabled || isSaving}>
+                    {isSaving ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2" />
+                        Salvando...
+                      </div>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

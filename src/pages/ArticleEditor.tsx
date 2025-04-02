@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Select,
   SelectContent,
@@ -28,9 +27,11 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Image, Plus, Minus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { ContentEditor } from '@/components/ContentEditor';
+import { Separator } from '@/components/ui/separator';
 
 // Define the status type explicitly
 type ArticleStatus = "draft" | "published";
@@ -53,13 +54,14 @@ const ArticleEditor = () => {
   const { user, isAuthenticated } = useAuth();
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<ArticleFormValues>({
     resolver: zodResolver(articleSchema),
     defaultValues: {
       title: "",
       content: "",
-      status: "draft",
+      status: "draft" as ArticleStatus,
       read_time: 5,
       tags: [],
     },
@@ -82,6 +84,25 @@ const ArticleEditor = () => {
     },
     enabled: isEditing,
   });
+
+  // Calculate reading time based on content length
+  const calculateReadingTime = (content: string) => {
+    // Average reading speed: 200 words per minute
+    const wordCount = content.trim().split(/\s+/).length;
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+    return readingTime;
+  };
+
+  // Update reading time when content changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'content' && value.content) {
+        const readingTime = calculateReadingTime(value.content);
+        form.setValue('read_time', readingTime);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Check if user has permission to edit
   useEffect(() => {
@@ -131,6 +152,8 @@ const ArticleEditor = () => {
   // Handle form submission
   const onSubmit = async (values: ArticleFormValues) => {
     try {
+      setIsSaving(true);
+      
       const articleData = {
         title: values.title,
         content: values.content,
@@ -181,6 +204,8 @@ const ArticleEditor = () => {
         description: "There was a problem saving your article. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -200,41 +225,39 @@ const ArticleEditor = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow pt-16">
-        <div className="container py-16 max-w-4xl">
+        <div className="container py-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/articles')}
-            className="mb-6"
+            className="mb-6 hover:bg-forest-100"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Articles
           </Button>
 
-          <h1 className="text-3xl font-bold text-forest-800 mb-8">
-            {isEditing ? "Edit Article" : "Create New Article"}
-          </h1>
-
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter article title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <input
+                          className="w-full text-3xl sm:text-4xl font-bold focus:outline-none border-b border-transparent focus:border-forest-300 pb-2 transition-all placeholder:text-gray-400 placeholder:font-normal placeholder:text-2xl"
+                          placeholder="Enter article title..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div>
-                <FormLabel>Tags</FormLabel>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {tags.map((tag) => (
-                    <Badge key={tag} className="bg-forest-100 text-forest-700">
+                    <Badge key={tag} className="bg-forest-100 text-forest-700 hover:bg-forest-200">
                       {tag}
                       <button 
                         type="button" 
@@ -245,37 +268,43 @@ const ArticleEditor = () => {
                       </button>
                     </Badge>
                   ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add a tag"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                  />
-                  <Button type="button" onClick={handleAddTag} variant="outline">
-                    Add
-                  </Button>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      placeholder="Add a tag"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      className="h-8 text-sm w-32 sm:w-auto"
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={handleAddTag} 
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
+
+              <Separator className="my-6" />
 
               <FormField
                 control={form.control}
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Write your article content here..." 
-                        {...field} 
-                        rows={15}
-                        className="resize-y"
+                      <ContentEditor 
+                        value={field.value} 
+                        onChange={field.onChange} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -283,74 +312,88 @@ const ArticleEditor = () => {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between flex-wrap gap-4 mt-8 pt-6 border-t border-gray-200">
+                <div className="flex items-center gap-2">
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem className="flex gap-2 items-center">
+                        <FormLabel className="m-0 text-sm font-medium">Status:</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-32 h-9">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="published">Published</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
                 <FormField
                   control={form.control}
                   name="read_time"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reading Time (minutes)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormLabel className="whitespace-nowrap text-sm font-medium">Reading time:</FormLabel>
+                      <div className="flex items-center border rounded-md">
+                        <button
+                          type="button"
+                          className="px-2 py-1 border-r"
+                          onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="px-3">{field.value} min</span>
+                        <button
+                          type="button"
+                          className="px-2 py-1 border-l"
+                          onClick={() => field.onChange(field.value + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => navigate('/articles')}
-                >
-                  Cancel
-                </Button>
                 
-                <Button type="submit">
-                  {form.watch("status") === "draft" ? (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Draft
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Publish
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-4 ml-auto">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => navigate('/articles')}
+                  >
+                    Cancel
+                  </Button>
+                  
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2" />
+                        Saving...
+                      </div>
+                    ) : form.watch("status") === "draft" ? (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Draft
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Publish
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
