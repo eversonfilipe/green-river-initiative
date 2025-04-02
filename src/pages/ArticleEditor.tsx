@@ -186,99 +186,116 @@ const ArticleEditor = () => {
 
   if (isEditing && isLoading) {
     return (
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow pt-16 flex items-center justify-center">
-            <div className="animate-spin h-12 w-12 border-4 border-forest-600 rounded-full border-t-transparent"></div>
-          </main>
-          <Footer />
-        </div>
-      </AuthProvider>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow pt-16 flex items-center justify-center">
+          <div className="animate-spin h-12 w-12 border-4 border-forest-600 rounded-full border-t-transparent"></div>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow pt-16">
-          <div className="container py-16 max-w-4xl">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/articles')}
-              className="mb-6"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Articles
-            </Button>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow pt-16">
+        <div className="container py-16 max-w-4xl">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/articles')}
+            className="mb-6"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Articles
+          </Button>
 
-            <h1 className="text-3xl font-bold text-forest-800 mb-8">
-              {isEditing ? "Edit Article" : "Create New Article"}
-            </h1>
+          <h1 className="text-3xl font-bold text-forest-800 mb-8">
+            {isEditing ? "Edit Article" : "Create New Article"}
+          </h1>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter article title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter article title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <div>
-                  <FormLabel>Tags</FormLabel>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {tags.map((tag) => (
-                      <Badge key={tag} className="bg-forest-100 text-forest-700">
-                        {tag}
-                        <button 
-                          type="button" 
-                          onClick={() => handleRemoveTag(tag)} 
-                          className="ml-1"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add a tag"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag();
-                        }
-                      }}
-                    />
-                    <Button type="button" onClick={handleAddTag} variant="outline">
-                      Add
-                    </Button>
-                  </div>
+              <div>
+                <FormLabel>Tags</FormLabel>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map((tag) => (
+                    <Badge key={tag} className="bg-forest-100 text-forest-700">
+                      {tag}
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveTag(tag)} 
+                        className="ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
                 </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a tag"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleAddTag} variant="outline">
+                    Add
+                  </Button>
+                </div>
+              </div>
 
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Write your article content here..." 
+                        {...field} 
+                        rows={15}
+                        className="resize-y"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="content"
+                  name="read_time"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Content</FormLabel>
+                      <FormLabel>Reading Time (minutes)</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Write your article content here..." 
-                          {...field} 
-                          rows={15}
-                          className="resize-y"
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -286,82 +303,61 @@ const ArticleEditor = () => {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="read_time"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Reading Time (minutes)</FormLabel>
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="1" 
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
-                          />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="published">Published</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-4">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => navigate('/articles')}
-                  >
-                    Cancel
-                  </Button>
-                  
-                  <Button type="submit">
-                    {form.watch("status") === "draft" ? (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Draft
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Publish
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    </AuthProvider>
+              <div className="flex justify-end gap-4">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => navigate('/articles')}
+                >
+                  Cancel
+                </Button>
+                
+                <Button type="submit">
+                  {form.watch("status") === "draft" ? (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Draft
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Publish
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 };
 

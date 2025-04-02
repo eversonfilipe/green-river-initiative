@@ -216,218 +216,216 @@ const Profile = () => {
   };
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow pt-16">
-          <div className="container py-16 max-w-4xl">
-            <h1 className="text-3xl font-bold text-forest-800 mb-8">My Profile</h1>
-            
-            {!isAuthenticated ? (
-              <div className="text-center py-16">
-                <User className="mx-auto h-16 w-16 text-forest-300 mb-4" />
-                <h2 className="text-2xl font-bold text-forest-800 mb-2">Please Sign In</h2>
-                <p className="text-forest-600 mb-6">You need to sign in to access your profile</p>
-                <Button asChild>
-                  <a href="/">Go to Homepage</a>
-                </Button>
-              </div>
-            ) : isLoading ? (
-              <div className="flex justify-center py-16">
-                <div className="animate-spin h-12 w-12 border-4 border-forest-600 rounded-full border-t-transparent"></div>
-              </div>
-            ) : error ? (
-              <div className="text-center py-16">
-                <h2 className="text-2xl font-bold text-forest-800 mb-2">Error Loading Profile</h2>
-                <p className="text-forest-600 mb-6">There was a problem loading your profile. Please try again.</p>
-                <Button onClick={() => refetch()}>Retry</Button>
-              </div>
-            ) : (
-              <Tabs defaultValue="profile">
-                <TabsList className="mb-8">
-                  <TabsTrigger value="profile">Profile Information</TabsTrigger>
-                  <TabsTrigger value="avatar">Avatar Customization</TabsTrigger>
-                </TabsList>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow pt-16">
+        <div className="container py-16 max-w-4xl">
+          <h1 className="text-3xl font-bold text-forest-800 mb-8">My Profile</h1>
+          
+          {!isAuthenticated ? (
+            <div className="text-center py-16">
+              <User className="mx-auto h-16 w-16 text-forest-300 mb-4" />
+              <h2 className="text-2xl font-bold text-forest-800 mb-2">Please Sign In</h2>
+              <p className="text-forest-600 mb-6">You need to sign in to access your profile</p>
+              <Button asChild>
+                <a href="/">Go to Homepage</a>
+              </Button>
+            </div>
+          ) : isLoading ? (
+            <div className="flex justify-center py-16">
+              <div className="animate-spin h-12 w-12 border-4 border-forest-600 rounded-full border-t-transparent"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <h2 className="text-2xl font-bold text-forest-800 mb-2">Error Loading Profile</h2>
+              <p className="text-forest-600 mb-6">There was a problem loading your profile. Please try again.</p>
+              <Button onClick={() => refetch()}>Retry</Button>
+            </div>
+          ) : (
+            <Tabs defaultValue="profile">
+              <TabsList className="mb-8">
+                <TabsTrigger value="profile">Profile Information</TabsTrigger>
+                <TabsTrigger value="avatar">Avatar Customization</TabsTrigger>
+              </TabsList>
+              
+              <form onSubmit={handleSubmit}>
+                <TabsContent value="profile" className="space-y-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Personal Information</CardTitle>
+                      <CardDescription>
+                        Update your personal details and public profile information.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-forest-700 mb-1">
+                          Email Address
+                        </label>
+                        <Input 
+                          id="email" 
+                          value={user?.email || ''} 
+                          disabled 
+                          className="bg-forest-50"
+                        />
+                        <p className="text-xs text-forest-500 mt-1">
+                          Email cannot be changed.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label htmlFor="displayName" className="block text-sm font-medium text-forest-700 mb-1">
+                          Display Name
+                        </label>
+                        <Input 
+                          id="displayName" 
+                          value={displayName} 
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="Enter your display name"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="biography" className="block text-sm font-medium text-forest-700 mb-1">
+                          Biography
+                        </label>
+                        <Textarea 
+                          id="biography" 
+                          value={biography} 
+                          onChange={(e) => setBiography(e.target.value)}
+                          placeholder="Tell us about yourself..."
+                          rows={5}
+                          className="resize-y"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
                 
-                <form onSubmit={handleSubmit}>
-                  <TabsContent value="profile" className="space-y-8">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Personal Information</CardTitle>
-                        <CardDescription>
-                          Update your personal details and public profile information.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <label htmlFor="email" className="block text-sm font-medium text-forest-700 mb-1">
-                            Email Address
-                          </label>
-                          <Input 
-                            id="email" 
-                            value={user?.email || ''} 
-                            disabled 
-                            className="bg-forest-50"
-                          />
-                          <p className="text-xs text-forest-500 mt-1">
-                            Email cannot be changed.
-                          </p>
-                        </div>
-
-                        <div>
-                          <label htmlFor="displayName" className="block text-sm font-medium text-forest-700 mb-1">
-                            Display Name
-                          </label>
-                          <Input 
-                            id="displayName" 
-                            value={displayName} 
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            placeholder="Enter your display name"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="biography" className="block text-sm font-medium text-forest-700 mb-1">
-                            Biography
-                          </label>
-                          <Textarea 
-                            id="biography" 
-                            value={biography} 
-                            onChange={(e) => setBiography(e.target.value)}
-                            placeholder="Tell us about yourself..."
-                            rows={5}
-                            className="resize-y"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="avatar" className="space-y-8">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Avatar Customization</CardTitle>
-                        <CardDescription>
-                          Customize your avatar appearance by selecting different features.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="flex flex-col space-y-6">
-                            <div>
-                              <label htmlFor="avatarSkin" className="block text-sm font-medium text-forest-700 mb-1">
-                                Skin Tone
-                              </label>
-                              <Select
-                                value={avatarSettings.skin}
-                                onValueChange={(value) => setAvatarSettings({...avatarSettings, skin: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select skin tone" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {avatarOptions.skin.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div>
-                              <label htmlFor="avatarClothing" className="block text-sm font-medium text-forest-700 mb-1">
-                                Clothing Style
-                              </label>
-                              <Select
-                                value={avatarSettings.clothing}
-                                onValueChange={(value) => setAvatarSettings({...avatarSettings, clothing: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select clothing style" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {avatarOptions.clothing.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div>
-                              <label htmlFor="avatarBackground" className="block text-sm font-medium text-forest-700 mb-1">
-                                Background Color
-                              </label>
-                              <Select
-                                value={avatarSettings.background}
-                                onValueChange={(value) => setAvatarSettings({...avatarSettings, background: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select background color" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {avatarOptions.background.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div>
-                              <label htmlFor="avatarGender" className="block text-sm font-medium text-forest-700 mb-1">
-                                Gender Appearance
-                              </label>
-                              <Select
-                                value={avatarSettings.gender}
-                                onValueChange={(value) => setAvatarSettings({...avatarSettings, gender: value})}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select gender appearance" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {avatarOptions.gender.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                <TabsContent value="avatar" className="space-y-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Avatar Customization</CardTitle>
+                      <CardDescription>
+                        Customize your avatar appearance by selecting different features.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col space-y-6">
+                          <div>
+                            <label htmlFor="avatarSkin" className="block text-sm font-medium text-forest-700 mb-1">
+                              Skin Tone
+                            </label>
+                            <Select
+                              value={avatarSettings.skin}
+                              onValueChange={(value) => setAvatarSettings({...avatarSettings, skin: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select skin tone" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {avatarOptions.skin.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                           
-                          <div className="flex flex-col items-center justify-center">
-                            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-forest-200 mb-4">
-                              <img 
-                                src={getAvatarUrl()} 
-                                alt="Avatar Preview" 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <p className="text-sm text-forest-600">Avatar Preview</p>
+                          <div>
+                            <label htmlFor="avatarClothing" className="block text-sm font-medium text-forest-700 mb-1">
+                              Clothing Style
+                            </label>
+                            <Select
+                              value={avatarSettings.clothing}
+                              onValueChange={(value) => setAvatarSettings({...avatarSettings, clothing: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select clothing style" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {avatarOptions.clothing.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="avatarBackground" className="block text-sm font-medium text-forest-700 mb-1">
+                              Background Color
+                            </label>
+                            <Select
+                              value={avatarSettings.background}
+                              onValueChange={(value) => setAvatarSettings({...avatarSettings, background: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select background color" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {avatarOptions.background.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="avatarGender" className="block text-sm font-medium text-forest-700 mb-1">
+                              Gender Appearance
+                            </label>
+                            <Select
+                              value={avatarSettings.gender}
+                              onValueChange={(value) => setAvatarSettings({...avatarSettings, gender: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender appearance" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {avatarOptions.gender.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <div className="mt-8 flex justify-end">
-                    <Button type="submit" disabled={saveButtonDisabled}>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  </div>
-                </form>
-              </Tabs>
-            )}
-          </div>
-        </main>
-        <Footer />
-      </div>
-    </AuthProvider>
+                        
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-forest-200 mb-4">
+                            <img 
+                              src={getAvatarUrl()} 
+                              alt="Avatar Preview" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <p className="text-sm text-forest-600">Avatar Preview</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <div className="mt-8 flex justify-end">
+                  <Button type="submit" disabled={saveButtonDisabled}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            </Tabs>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 };
 
