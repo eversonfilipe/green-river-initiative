@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useQuery } from '@tanstack/react-query';
@@ -31,6 +31,9 @@ import { useForm } from "react-hook-form";
 import { ArrowLeft, Save, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+
+// Define the status type explicitly
+type ArticleStatus = "draft" | "published";
 
 const articleSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -105,7 +108,7 @@ const ArticleEditor = () => {
       form.reset({
         title: articleData.title,
         content: articleData.content,
-        status: articleData.status || "draft",
+        status: (articleData.status as ArticleStatus) || "draft",
         read_time: articleData.read_time || 5,
         tags: articleData.tags || [],
       });

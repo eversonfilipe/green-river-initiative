@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useQuery } from '@tanstack/react-query';
@@ -31,6 +31,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Save, User } from 'lucide-react';
+
+// Define the profile interface
+interface ProfileData {
+  id: string;
+  biography?: string | null;
+  avatar_skin?: string | null;
+  avatar_clothing?: string | null;
+  avatar_background?: string | null;
+  avatar_gender?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
 
 const avatarOptions = {
   skin: [
@@ -95,7 +107,14 @@ const Profile = () => {
       
       return {
         user: userData,
-        profile: profileData || { id: user.id }
+        profile: profileData || { 
+          id: user.id,
+          biography: '',
+          avatar_skin: 'medium',
+          avatar_clothing: 'casual',
+          avatar_background: 'blue',
+          avatar_gender: 'neutral'
+        }
       };
     },
     enabled: !!user?.id && isAuthenticated,
